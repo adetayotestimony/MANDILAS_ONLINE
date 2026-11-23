@@ -1,0 +1,8 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Track your order - MANDILAS ONLINE</title><link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="/assets/site.css"></head><body><div class="wrap" style="max-width:640px"><h1>Track your order</h1><p class="muted">Enter your order reference and the email you used at checkout.</p>
+<div class="card"><label>Order reference</label><input id="ref" placeholder="mandilas_..."><label>Email</label><input id="em" type="email"><button class="btn" id="go">Track</button></div><div id="out"></div></div>
+<script src="/assets/site.js"></script><script>
+header();const q=new URLSearchParams(location.search);$('#ref').value=q.get('ref')||'';$('#em').value=q.get('email')||'';
+async function go(){const out=$('#out');out.innerHTML='';try{const o=await api('/api/track?reference='+encodeURIComponent($('#ref').value.trim())+'&email='+encodeURIComponent($('#em').value.trim()));
+ out.innerHTML=`<div class="card"><span class="chip ${o.status}">${LABEL[o.status]}</span> <b class="mono">${esc(o.reference)}</b><p class="muted">${itemsHTML(o)}<br>Total ${fmt(o.total)}${o.discount?' (saved '+fmt(o.discount)+')':''}</p>${timelineHTML(o)}<p class="muted">Delivering to: ${esc(o.address)}, ${esc(o.city)}</p></div>`}catch(e){out.innerHTML='<div class="card">'+esc(e.message)+'</div>'}}
+$('#go').onclick=go;if(q.get('ref')&&q.get('email'))go();
+</script></body></html>

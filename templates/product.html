@@ -1,0 +1,37 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ (p.name ~ ' - MANDILAS ONLINE') if p else 'Shoe not found - MANDILAS ONLINE' }}</title>
+{% if p %}<meta name="description" content="{{ desc }}"><link rel="canonical" href="{{ site_url }}/product/{{ p.id }}">
+<meta property="og:type" content="product"><meta property="og:site_name" content="MANDILAS ONLINE"><meta property="og:title" content="{{ p.name }} - MANDILAS ONLINE">
+<meta property="og:description" content="{{ desc }}"><meta property="og:url" content="{{ site_url }}/product/{{ p.id }}"><meta property="og:image" content="{{ site_url }}/share/{{ p.id }}.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ p.name }} - MANDILAS ONLINE"><meta name="twitter:image" content="{{ site_url }}/share/{{ p.id }}.jpg">
+<script type="application/ld+json">{{ jsonld|safe }}</script>{% else %}<meta name="robots" content="noindex">{% endif %}<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="/assets/site.css"><link rel="icon" href="/assets/favicon.png"><link rel="apple-touch-icon" href="/assets/favicon.png"><meta name="theme-color" content="#0b0b0a"></head><body><div class="wrap" id="app"><p class="muted mono">Loading…</p></div>
+<script src="/assets/site.js"></script>
+<script>
+header();
+const pid=location.pathname.split('/').pop();let sel=null,P=null,saved=false;
+(async()=>{
+ try{P=await api('/api/products/'+encodeURIComponent(pid))}catch(e){$('#app').innerHTML='<h1>Shoe not found</h1><a class="btn" href="/#shop">Back to catalog</a>';return}
+ document.title=P.name+' - MANDILAS ONLINE';trackView(P.id);
+ try{saved=(await api('/api/me/wishlist/ids')).includes(P.id)}catch(e){}
+ const total=Object.values(P.sizes).reduce((a,b)=>a+b,0);
+ const first=Object.keys(P.sizes).find(s=>P.sizes[s]>0);sel=first||null;
+ $('#app').innerHTML=`<p class="muted mono"><a href="/#shop">&larr; CATALOG</a> / ${esc(P.category)}</p><div class="two">
+ <div class="media" id="media">${P.video?`<video id="mv" src="${P.video}" poster="${P.img}" controls muted loop playsinline></video>`:`<img src="${P.img}" alt="${esc(P.name)}" width="800" height="800">`}
+ ${P.video?`<div class="thumbs"><img src="${P.img}" id="t1"><video src="${P.video}" id="t2" muted></video></div>`:''}</div>
+ <div><h1>${esc(P.name)}</h1>${P.colour?`<p class="muted mono">${esc(P.colour)}</p>`:''}<p class="price" style="font-size:1.3rem">${fmt(P.price)}</p>
+ <label>Size (EU)</label><div class="sizes" id="sizes">${Object.keys(P.sizes).map(s=>`<button class="sz ${s===sel?'on':''}" data-s="${s}" ${P.sizes[s]<=0?'disabled':''}>${s}</button>`).join('')}</div>
+ <p class="muted" id="stock">${total===0?'Sold out':(total<=3?'Only '+total+' pairs left':'In stock')}</p>
+ <div class="row" style="margin-top:14px"><button class="btn" id="add" ${first?'':'disabled'} style="flex:3">${first?'Add to cart':'Sold out'}</button><button class="heart ${saved?'on':''}" id="wish" aria-label="Save to wishlist" style="flex:0 0 42px;min-width:42px">&#9829;</button></div>
+ <p class="muted" style="margin-top:18px">Pay securely with Paystack. Track every step of your delivery from your account.</p></div></div><div id="more"></div>`;
+ $('#sizes').onclick=e=>{const b=e.target.closest('.sz');if(!b||b.disabled)return;sel=b.dataset.s;document.querySelectorAll('.sz').forEach(x=>x.classList.toggle('on',x===b))};
+ $('#add').onclick=()=>{if(!sel)return;addToCartLocal(P.id,sel);toast('Added to cart');document.querySelector('.count').textContent=cartCount()};
+ $('#wish').onclick=async()=>{try{const r=await post('/api/me/wishlist/'+P.id);$('#wish').classList.toggle('on',r.saved);toast(r.saved?'Saved to wishlist':'Removed')}catch(e){location.href='/account?next='+encodeURIComponent(location.pathname)}};
+ if(P.video){$('#t1').onclick=()=>{$('#media').firstElementChild.outerHTML=`<img src="${P.img}">`};$('#t2').onclick=()=>{$('#media').firstElementChild.outerHTML=`<video src="${P.video}" controls autoplay muted loop playsinline></video>`}}
+ const card=x=>`<a class="card" href="/product/${x.id}"><img src="${x.thumb||x.img}" alt="${esc(x.name)}" loading="lazy" width="320" height="320"><div class="b">${esc(x.name)}<div class="price">${fmt(x.price)}</div></div></a>`;
+ const rel=await api('/api/products/'+encodeURIComponent(P.id)+'/recommendations');let h='';
+ if(rel.length)h+='<h2 style="margin-top:40px">You may also like</h2><div class="grid">'+rel.map(card).join('')+'</div>';
+ const all=await api('/api/products');const seen=recentIds().filter(i=>i!==P.id).map(i=>all.find(x=>x.id===i)).filter(Boolean).slice(0,4);
+ if(seen.length)h+='<h2 style="margin-top:40px">Recently viewed</h2><div class="grid">'+seen.map(card).join('')+'</div>';
+ $('#more').innerHTML=h;
+})();
+</script></body></html>
