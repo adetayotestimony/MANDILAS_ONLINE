@@ -1,0 +1,42 @@
+# Render Blueprint for MANDILAS ONLINE. Secrets marked "sync: false" are typed into Render, never stored in GitHub.
+services:
+  - type: web
+    name: mandilas-online
+    runtime: python
+    plan: starter            # a paid plan is needed for the persistent disk
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT
+    healthCheckPath: /robots.txt
+    disk:
+      name: mandilas-data    # keeps your database and uploaded photos/videos across deploys
+      mountPath: /var/data
+      sizeGB: 5
+    envVars:
+      - key: DB_PATH
+        value: /var/data/mandilas.db
+      - key: UPLOAD_DIR
+        value: /var/data/uploads
+      - key: COOKIE_SECURE
+        value: "1"
+      - key: RUN_SCHEDULER
+        value: "1"
+      - key: LOW_STOCK
+        value: "3"
+      - key: ORDER_EMAIL
+        value: mandilasonline@gmail.com
+      - key: SMTP_USER
+        value: mandilasonline@gmail.com
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CRON_KEY
+        generateValue: true
+      - key: SITE_URL
+        sync: false          # e.g. https://mandilas-online.onrender.com (or your own domain)
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_WEBHOOK_SECRET
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false          # Gmail App Password
